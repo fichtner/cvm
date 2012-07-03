@@ -1,8 +1,9 @@
 cvm: small example vm in c
 
 Based on code found at:
-http://en.wikibooks.org/wiki/Creating_a_Virtual_Machine/Register_VM_in_C
+  http://en.wikibooks.org/wiki/Creating_a_Virtual_Machine/Register_VM_in_C
 
 (Really, that's all)
 
-For more information, please visit http://lastsummer.de/
+For more information, please visit:
+  http://lastsummer.de/building-your-own-vm/
