@@ -1,15 +1,20 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MEM_SIZE 256
+#define REG_SIZE 4
+
 struct cvm_instance {
 	/* vm can issue halt command */
 	unsigned int running;
 	/* program counter */
 	unsigned int pc;
+	/* stack pointer */
+	unsigned int sp;
 	/* main registers */
-	unsigned short r[4];
+	unsigned short r[REG_SIZE];
 	/* additional memory */
-	unsigned short m[256];
+	unsigned short m[MEM_SIZE];
 };
 
 struct cvm_instruction {
@@ -58,7 +63,7 @@ static void evaluate(struct cvm_instance *vm, const struct cvm_instruction *vi)
 		printf("syscall %d\n", vi->imm);
 		switch (vi->imm) {
 		case 0:
-			printf("%s\n", (const char *) &vm->m[vm->r[0]]);
+			printf("%s\n", (char *) &vm->m[vm->m[MEM_SIZE - (vm->sp--)]]);
 			break;
 		}
 		break;
@@ -69,6 +74,14 @@ static void evaluate(struct cvm_instance *vm, const struct cvm_instruction *vi)
 	case 8:
 		printf("halt\n");
 		vm->running = 0;
+		break;
+	case 9:
+		printf("push r%d\n", vi->r1);
+		vm->m[MEM_SIZE - (++vm->sp)] = vm->r[vi->r1];
+		break;
+	case 10:
+		printf("pop r%d\n", vi->r1);
+		vm->r[vi->r1] = vm->m[MEM_SIZE - (vm->sp--)];
 		break;
 	}
 
@@ -89,6 +102,8 @@ static void run(const unsigned short *program, size_t len)
 	memset(&vm, 0, sizeof(vm));
 	memcpy(&vm.m, program, len);
 	vm.running = 1;
+
+	printf("==========================\n");
 
 	while (vm.running) {
 		fetch_and_decode(&vm, &vi);
@@ -112,8 +127,25 @@ int main(void)
 		0x0000,
 		0x8000,
 	};
+	const unsigned short pushpop[] = {
+		0x100A,
+		0x9000,
+		0x1000,
+		0xA000,
+		0x1101,
+		0x9100,
+		0x1102,
+		0x9100,
+		0x1103,
+		0x9100,
+		0xA100,
+		0xA200,
+		0xA300,
+		0x8000,
+	};
 	const unsigned short hello[] = {
-		0x1003,
+		0x1004,
+		0x9000,
 		0x6000,
 		0x8000,
 		0x6548,
@@ -126,6 +158,7 @@ int main(void)
 	};
 
 	run(sample, sizeof(sample));
+	run(pushpop, sizeof(pushpop));
 	run(hello, sizeof(hello));
 
 	return 0;
