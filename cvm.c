@@ -38,6 +38,10 @@ static void fetch_and_decode(const struct cvm_instance *vm, struct cvm_instructi
 
 static void evaluate(struct cvm_instance *vm, const struct cvm_instruction *vi)
 {
+	/* instruction already fetched - in 99% of all
+	 * cases we only forward the program counter */
+	++vm->pc;
+
 	switch(vi->num) {
 	case 0:
 		printf("noop\n");
@@ -86,9 +90,11 @@ static void evaluate(struct cvm_instance *vm, const struct cvm_instruction *vi)
 		printf("pop r%d\n", vi->r1);
 		vm->r[vi->r1] = pop(vm);
 		break;
+	case 11:
+		printf("jump @%d\n", vi->imm);
+		vm->pc = vi->imm;
+		break;
 	}
-
-	++vm->pc;
 }
 
 static void show(const struct cvm_instance *vm)
@@ -159,10 +165,18 @@ int main(void)
 		0x2164,
 		0x0000,
 	};
+	const unsigned short jumper[] = {
+		0xB003,
+		0x1001,
+		0xB004,
+		0xB001,
+		0x8000,
+	};
 
 	run(sample, sizeof(sample));
 	run(pushpop, sizeof(pushpop));
 	run(hello, sizeof(hello));
+	run(jumper, sizeof(jumper));
 
 	return 0;
 }
