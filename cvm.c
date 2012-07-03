@@ -2,8 +2,6 @@
 #include <string.h>
 
 struct cvm_instance {
-	/* pointer to initial program */
-	const unsigned int *code;
 	/* vm can issue halt command */
 	unsigned int running;
 	/* program counter */
@@ -21,7 +19,7 @@ struct cvm_instruction {
 
 static void fetch_and_decode(const struct cvm_instance *vm, struct cvm_instruction *vi)
 {
-	unsigned int instruction = vm->code[vm->pc];
+	unsigned int instruction = vm->m[vm->pc];
 
 	vi->num = (instruction & 0xF000) >> 12;
 	vi->r1 = (instruction & 0xF00) >> 8;
@@ -83,13 +81,13 @@ static void show(const struct cvm_instance *vm)
 		vm->r[0], vm->r[1], vm->r[2], vm->r[3]);
 }
 
-static void run(const unsigned int *program)
+static void run(const unsigned short *program, size_t len)
 {
 	struct cvm_instruction vi;
 	struct cvm_instance vm;
 
 	memset(&vm, 0, sizeof(vm));
-	vm.code = program;
+	memcpy(&vm.m, program, len);
 	vm.running = 1;
 
 	while (vm.running) {
@@ -102,7 +100,7 @@ static void run(const unsigned int *program)
 
 int main(void)
 {
-	const unsigned int sample[] = {
+	const unsigned short sample[] = {
 		0x1064,
 		0x11C8,
 		0x2201,
@@ -114,45 +112,21 @@ int main(void)
 		0x0000,
 		0x8000,
 	};
-	const unsigned int hello[] = {
-		0x1065,
-		0x7008,
-		0x1148,
-		0x2001,
-		0x5000,
-		0x106C,
-		0x7008,
-		0x116C,
-		0x2001,
-		0x5001,
-		0x1020,
-		0x7008,
-		0x116F,
-		0x2001,
-		0x5002,
-		0x106F,
-		0x7008,
-		0x1177,
-		0x2001,
-		0x5003,
-		0x106C,
-		0x7008,
-		0x1172,
-		0x2001,
-		0x5004,
-		0x1021,
-		0x7008,
-		0x1164,
-		0x2001,
-		0x5005,
-		0x1000,
-		0x5006,
+	const unsigned short hello[] = {
+		0x1003,
 		0x6000,
 		0x8000,
+		0x6548,
+		0x6C6C,
+		0x206F,
+		0x6F77,
+		0x6C72,
+		0x2164,
+		0x0000,
 	};
 
-	run(sample);
-	run(hello);
+	run(sample, sizeof(sample));
+	run(hello, sizeof(hello));
 
 	return 0;
 }
