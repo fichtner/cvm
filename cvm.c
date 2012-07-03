@@ -33,6 +33,9 @@ static void fetch_and_decode(const struct cvm_instance *vm, struct cvm_instructi
 	vi->imm = instruction & 0xFF;
 }
 
+#define push(__vm__)	((__vm__)->m[MEM_SIZE - (++(__vm__)->sp)])
+#define pop(__vm__)		((__vm__)->m[MEM_SIZE - ((__vm__)->sp--)])
+
 static void evaluate(struct cvm_instance *vm, const struct cvm_instruction *vi)
 {
 	switch(vi->num) {
@@ -63,7 +66,7 @@ static void evaluate(struct cvm_instance *vm, const struct cvm_instruction *vi)
 		printf("syscall %d\n", vi->imm);
 		switch (vi->imm) {
 		case 0:
-			printf("%s\n", (char *) &vm->m[vm->m[MEM_SIZE - (vm->sp--)]]);
+			printf("%s\n", (char *) &vm->m[pop(vm)]);
 			break;
 		}
 		break;
@@ -77,11 +80,11 @@ static void evaluate(struct cvm_instance *vm, const struct cvm_instruction *vi)
 		break;
 	case 9:
 		printf("push r%d\n", vi->r1);
-		vm->m[MEM_SIZE - (++vm->sp)] = vm->r[vi->r1];
+		push(vm) = vm->r[vi->r1];
 		break;
 	case 10:
 		printf("pop r%d\n", vi->r1);
-		vm->r[vi->r1] = vm->m[MEM_SIZE - (vm->sp--)];
+		vm->r[vi->r1] = pop(vm);
 		break;
 	}
 
